@@ -4,7 +4,10 @@ function love.load()
 	Lane = require("lane")
 	Note = require("note")
 	print("// - // Break the rules // - //")
-	love.window.setMode(711, 400, { fullscreen = true, vsync = 1 })
+	love.window.setMode(711, 400, { fullscreen = false, vsync = 1 })
+	keys = {
+		"d", "f", "j", "k"
+	}
 	lanes = { 
 		Lane:new(),
 		Lane:new(),
@@ -33,8 +36,8 @@ end
 function love.keypressed(key, scankey)
 
 	-- Change this to F11 when this goes standalone
-	if key == "f1" then
-		love.window.setFullscreen(not love.window.getFullscreen)
+	if key == "f11" then
+		love.window.setFullscreen(not love.window.getFullscreen())
 
 	-- Quitting the game by hitting escape.
 	elseif key == "escape" then
@@ -44,32 +47,24 @@ function love.keypressed(key, scankey)
 			"Quitting...",
 			"Come back soon!"
 		}
-		print("Escape pressed\n"..QuitMessages[math.random(#QuitMessages)])
+		print(QuitMessages[math.random(#QuitMessages)])
 		love.event.quit()
 
-	-- These scankeys are for normal player input
-	elseif scankey == "h" then
-		lanes[1].Pressed = true
-	elseif scankey == "t" then
-		lanes[2].Pressed = true
-	elseif scankey == "n" then
-		lanes[3].Pressed = true
-	elseif scankey == "e" then
-		lanes[4].Pressed = true
+	end
+	for n, i in next, keys do
+		if scankey == i then
+			lanes[n].Pressed = true
+		end
 	end
 end
 
 
 -- Made for fancy animations:tm: and for long notes.
 function love.keyreleased(key, scankey)
-	if scankey == "h" then
-		lanes[1].Pressed = false
-	elseif scankey == "t" then
-		lanes[2].Pressed = false
-	elseif scankey == "n" then
-		lanes[3].Pressed = false
-	elseif scankey == "e" then
-		lanes[4].Pressed = false
+	for n, i in next, keys do
+		if scankey == i then
+			lanes[n].Pressed = false
+		end
 	end
 end
 
@@ -84,6 +79,8 @@ function love.draw()
 	end
 
 	for _, i in next, notes do
-		
+		if i.Show then
+			love.graphics.circle("fill", lanes[i.Lane].X + 20, timeElapsedSinceStart * 50, 18)
+		end
 	end
 end

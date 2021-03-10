@@ -1,4 +1,4 @@
-Note = { Time = 5, Show = false, Lane = 1 }
+Note = { Time = 10, Show = false, Lane = 1 }
 
 function Note:new(o)
 	o = o or {}
