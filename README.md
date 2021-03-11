@@ -19,7 +19,7 @@ Dependencies:
 
 To run the game, simply clone the repo, and run the *folder* (**NOT** main.lua) with love.
 ```
-git clone --recursive https://github.com/NullCat/bre4k
+git clone --recursive https://github.com/NullCat/bre4k.git
 love bre4k
 ```
 
