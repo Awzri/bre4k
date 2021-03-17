@@ -1,4 +1,12 @@
-Lane = { X = 0, Y = 0 , Input = 1, Pressed = false }
+Lane = {
+	X = 0, -- Both the X and Y are in percent
+	Y = 0,
+	Width = 6.2, -- Percent of screen space
+	Input = 1,
+	Pressed = false,
+	Locked = true,
+	Notes = {}
+	}
 
 function Lane:new(o)
 	o = o or {}
@@ -7,8 +15,9 @@ function Lane:new(o)
 	return o
 end
 
-function Lane:move(x, time, tween, style)
-
+function Lane:move(x)
+	self.Locked = false
+	self.X = x
 end
 
 return Lane
