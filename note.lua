@@ -1,14 +1,16 @@
 Note = {
 	Time = 0,
 	BPMTime = 0,
-	BPSTime = 0,
-	Show = false,
+	BeatTime = 0/1,
+	Show = true,
 	Lane = 1,
 	Link = nil,
 	Hittable = true,
 	Long = false,
 	Mine = false,
-	Speed = 100 --150
+	Speed = 100, --150
+	Color = {1,1,1,1},
+	ColorUnhittable = {0.5,0.5,0.5,1}
 	}
 
 function Note:new(o)
@@ -22,12 +24,8 @@ function Note:addLinkBPM(func, timeBPM)
 
 end
 
-function Note:addLinkBPS(func, timeBPS)
-
-end
-
 function Note:addLink(func, time)
-
+	Link = func(time)
 end
 
 return Note

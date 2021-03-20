@@ -1,11 +1,15 @@
 Lane = {
-	X = 0, -- Both the X and Y are in percent
+	X = 0, -- Both the X and Y are in pixels
 	Y = 0,
 	Width = 6.2, -- Percent of screen space
 	Input = 1,
 	Pressed = false,
 	Locked = true,
-	Notes = {}
+	Notes = {},
+	StartX = 0,
+	StartY = 0,
+	Show = false,
+	Color = {1,1,1,1} 
 	}
 
 function Lane:new(o)
