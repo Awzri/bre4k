@@ -23,4 +23,8 @@ git clone https://github.com/NullCat/bre4k.git
 love bre4k
 ```
 
+For the game to run, you will need a `song.lua` file in the root directory.
+Rename/copy `song-default.lua` and modify it to get the song you want.
+Editor is coming soon™
+
 Binaries won't exist until the game is playable.

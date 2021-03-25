@@ -28,6 +28,10 @@ function love.load()
 	}
 	lanes = Song.Lanes
 	notes = Song.Notes
+	if love.filesystem.getInfo(Song.Info.File).type == "file" then
+		music = love.audio.newSource(Song.Info.File, "stream")
+	end
+	if music then music:play() end
 end
 
 -- timeElapsedSinceStart should be used for checking accuracy
