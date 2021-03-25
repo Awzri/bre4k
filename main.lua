@@ -19,7 +19,7 @@ function love.load()
 	timeElapsedSinceStart = 0
 	math.randomseed(os.time())
 	print("// - // Break the rules // - //")
-	love.window.setMode(711, 400, { fullscreen = true, vsync = 1 })
+	love.window.setMode(711, 400, { fullscreen = true, vsync = 0 })
 	Lane = require("lane")
 	Note = require("note")
 	Song = require("song")
@@ -68,31 +68,57 @@ function love.keypressed(key, scankey)
 		love.event.quit()
 
 	end
+	-- dont mind this absolute mess
+	--[[
 	for n, i in next, keys do
-		if scankey == i then
+		if key == i then
 			for m, j in next, lanes do
-				if j.Input == n or lanes[n].Input == j.Input then
+				if lanes[n].Input == j.Input then
 					j.Pressed = true
-					local nextNote = notes[1] or nil
-					if nextNote and nextNote.Hittable and nextNote.Lane == m and timeElapsedSinceStart >= nextNote.Time - .4 and timeElapsedSinceStart <= nextNote.Time + .4 then
-						print("Hit!")
-						if nextNote.Link then nextNote.Link() end
-						table.remove(notes, 1)
+					print("Pressed!")
+					for noteCheck = 1, 4 do
+						local nextNote = notes[noteCheck] or nil
+						if nextNote and nextNote.Hittable and nextNote.Lane == j.Input and timeElapsedSinceStart >= nextNote.Time - .4 and timeElapsedSinceStart <= nextNote.Time + .4 then
+							print("Hit!")
+							if nextNote.Link then nextNote.Link() end
+							table.remove(notes, 1)
+						end
 					end
 				end
 			end
 		end
 	end
-	print("-------")
+	]]
+	for n, i in next, keys do
+		if key == i then
+			for m, j in next, lanes do
+				if lanes[n].Input == j.Input then
+					j.Pressed = true
+					for o, k in next, notes do
+						if o > 4 then break end
+						if k.Hittable
+						and k.Lane == m
+						and timeElapsedSinceStart >= k.Time - .4
+						and timeElapsedSinceStart <= k.Time + .4 then
+							print("Hit!")
+							if k.Link then k.Link() end
+							table.remove(notes, o)
+						end
+					end
+				end
+			end
+		end
+	end
 end
+
 
 
 -- Made for fancy animations:tm: and for long notes.
 function love.keyreleased(key, scankey)
 	for n, i in next, keys do
-		if scankey == i then
+		if key == i then
 			for _, j in next, lanes do
-				if j.Input == n or lanes[n].Input == j.Input then
+				if lanes[n].Input == j.Input then
 					j.Pressed = false
 				end
 			end

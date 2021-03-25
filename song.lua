@@ -32,7 +32,7 @@ Song.Lanes = {}
 -- Put lanes into the table
 for i = 1, 4 do
 	table.insert(Song.Lanes, Lane:new())
-	Song.Lanes[i].Input = i <= 2 and 2 or 4
+	Song.Lanes[i].Input = i <= 2 and 1 or 3
 	Song.Lanes[i].X = (love.graphics.getWidth() / 2) + percentWidth(6.2) * (i - 3)
 	Song.Lanes[i].Y = percentHeight(90)
 	Song.Lanes[i].StartX = Song.Lanes[i].X
