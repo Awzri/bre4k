@@ -21,6 +21,7 @@ Song.Info = {
 	Notes = 8,
 	Long = 0,
 	BPM = 120,
+	Offset = 0,
 	BGVideo = nil,
 	BGImage = nil,
 	Version = 1

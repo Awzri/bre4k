@@ -11,13 +11,13 @@ function percentHeight(percent)
 	return love.graphics.getHeight() * (percent / 100)
 end
 
-function convertBeatTime(BPM, beatTime, measure)
+function convertBeatTime(BPM, beatTime, measure, offset)
 	-- Due to the way this is made, only supports 4/4 for the time being
 	local BPS = BPM / 60
 	local secondsToNextMeasure = 4 / BPS
 	local Time = secondsToNextMeasure * measure
 	Time = Time + (beatTime * secondsToNextMeasure)
-	return Time - 0.16798
+	return Time + offset
 end
 
 function love.load()
@@ -35,7 +35,7 @@ function love.load()
 	notes = Song.Notes
 	for _, i in next, notes do
 		if i.Time == 0 then
-			i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure)
+			i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
 		end
 	end
 	if love.filesystem.getInfo(Song.Info.File).type == "file" then

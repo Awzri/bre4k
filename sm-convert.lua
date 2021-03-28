@@ -27,7 +27,8 @@ Original = {
 	Name = string.match(smFileRead, "#TITLE:(.-);"),
 	Artist = string.match(smFileRead, "#ARTIST:(.-);"),
 	File = string.match(smFileRead, "#MUSIC:(.-);"),
-	BPM = string.match(smFileRead, "#BPMS:0=(.-);")
+	BPM = string.match(smFileRead, "#BPMS:0=(.-);"),
+	Offset = tonumber(string.match(smFileRead, "#OFFSET:(.-);")) + 1
 }
 
 local noteStart
@@ -123,6 +124,7 @@ Song.Info = {
 	Notes = ]]..noteCount..[[,
 	Long = 0,
 	BPM = ]]..Original.BPM..[[,
+	Offset = ]]..Original.Offset..[[,
 	BGVideo = nil,
 	BGImage = nil,
 	Version = 1
