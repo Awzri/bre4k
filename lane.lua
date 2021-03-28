@@ -8,7 +8,7 @@ Lane = {
 	Notes = {},
 	StartX = 0,
 	StartY = 0,
-	Show = false,
+	Show = true,
 	Color = {1,1,1,1} 
 	}
 

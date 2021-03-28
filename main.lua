@@ -11,8 +11,13 @@ function percentHeight(percent)
 	return love.graphics.getHeight() * (percent / 100)
 end
 
-function convertTimeBPM(BPM, timeBPM)
-
+function convertBeatTime(BPM, beatTime, measure)
+	-- Due to the way this is made, only supports 4/4 for the time being
+	local BPS = BPM / 60
+	local secondsToNextMeasure = 4 / BPS
+	local Time = secondsToNextMeasure * measure
+	Time = Time + (beatTime * secondsToNextMeasure)
+	return Time - 0.16798
 end
 
 function love.load()
@@ -28,6 +33,11 @@ function love.load()
 	}
 	lanes = Song.Lanes
 	notes = Song.Notes
+	for _, i in next, notes do
+		if i.Time == 0 then
+			i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure)
+		end
+	end
 	if love.filesystem.getInfo(Song.Info.File).type == "file" then
 		music = love.audio.newSource(Song.Info.File, "stream")
 	end
@@ -42,7 +52,7 @@ function love.update(d)
 			if i.Link then i.Link() end
 			table.remove(notes, n)
 		end
-		if timeElapsedSinceStart > i.Time + .4 and i.Hittable then
+		if timeElapsedSinceStart > i.Time + .25 and i.Hittable then
 			print("Miss!")
 			if i.Link then i.Link() end
 			table.remove(notes, n)
@@ -51,7 +61,9 @@ function love.update(d)
 			break
 		end
 	end
-	Song.OnUpdate(timeElapsedSinceStart)
+	if Song.OnUpdate then
+		Song.OnUpdate(timeElapsedSinceStart)
+	end
 end
 
 function love.keypressed(key, scankey)
@@ -102,11 +114,12 @@ function love.keypressed(key, scankey)
 						if o > 4 then break end
 						if k.Hittable
 						and k.Lane == m
-						and timeElapsedSinceStart >= k.Time - .4
-						and timeElapsedSinceStart <= k.Time + .4 then
+						and timeElapsedSinceStart >= k.Time - .25
+						and timeElapsedSinceStart <= k.Time + .25 then
 							print("Hit!")
 							if k.Link then k.Link() end
 							table.remove(notes, o)
+							break
 						end
 					end
 				end

@@ -28,3 +28,16 @@ Rename/copy `song-default.lua` and modify it to get the song you want.
 Editor is coming soon™
 
 Binaries won't exist until the game is playable.
+
+## Mapping
+You can create maps manually (please dont) or you can convert .sm Stepmania maps into song.lua files.
+
+You can do this by using the sm-convert.lua file.
+`lua sm-convert.lua song.sm`
+Please not the converter was made with Lua 5.4. Older/newer versions may not work.
+
+**! CONVERTER CURRENTLY CANNOT HANDLE !**
+- Long notes (NYI in Bre4k)
+- BPM Changes (Can be done manually)
+- Irregular Measures (Can be done manually)
+*Please don't create an issue for any of those. They'll be in the converter/game eventually.*
