@@ -1,6 +1,7 @@
 -- Standalone converter for Stepmania songs
 -- CONVERTS .sm FILES, NOT .ssc FILES
 -- Used for bre4k
+-- https://github.com/NullCat/bre4k
 
 local file = {...}
 
@@ -50,6 +51,7 @@ end
 smFile:seek("set")
 -- Format for NoteList is similar to the Note object in bre4k
 local NoteList = {}
+local incompleteLongs = {}
 -- what do you mean f:lines() doesn't produce 2 variables?
 do
 	local n = 0
@@ -64,22 +66,47 @@ do
 				positionInMeasure = positionInMeasure + 1
 				for j = 1, 4 do
 					local noteChecked = i:sub(j,j)
-					if noteChecked == "1" then
-						print(noteChecked, positionInMeasure)
+					if noteChecked == "3" then
+						for _, k in next, incompleteLongs do
+							if k.Lane == j then
+								k.LongMeasure = measureNumber
+								k.LongBeatTime = positionInMeasure
+								table.insert(NoteList, )
+						table.insert(NoteList, )
+					elseif noteChecked ~= "0" then
+						local newNote = {}
+						newNote.Measure = measureNumber
+						newNote.BeatTime = positionInMeasure
+						newNote.Lane = j
+						if noteChecked == "1" then
+							table.insert(NoteList, newNote)
+						elseif noteChecked == "2" or noteChecked == "4" then
+							table.insert(incompleteLongs, newNote)
+						elseif noteChecked == "M" then
+							newNote.Mine = true
+							table.insert(NoteList, newNote)
+						end
+					end
+					--[[if noteChecked == "1" then
 						local newNote = {}
 						newNote.Measure = measureNumber
 						newNote.BeatTime = positionInMeasure
 						newNote.Lane = j
 						table.insert(NoteList, newNote)
+					elseif noteChecked == "2" or noteChecked == "4" then
+						local newNote = {}
+						newNote.Measure = measureNumber
+						newNote.BeatTime = positionInMeasure
+						newNote.Lane = j
+						table.insert(incompleteLongs, newNote)
 					elseif noteChecked == "M" then
-						print(noteChecked)
 						local newNote = {}
 						newNote.Measure = measureNumber
 						newNote.Mine = true
 						newNote.BeatTime = positionInMeasure
 						newNote.Lane = j
 						table.insert(NoteList, newNote)
-					end
+					end]]
 				end
 			elseif i:len() == 1 then
 				print("Hit comma...")
@@ -110,6 +137,10 @@ for n, i in next, NoteList do
 	currentNote = currentNote.."Song.Notes["..n.."].Measure = "..i.Measure.."\n"
 	if i.Mine then
 		currentNote = currentNote.."Song.Notes["..n.."].Mine = true\n"
+	elseif i.Long then
+		currentNote = currentNote.."Song.Notes["..n.."].Long = true\n"
+		currentNote = currentNote.."Song.Notes["..n.."].LongMeasure = "..i.LongMeasure.."\n"
+		currentNote = currentNote.."SOng.Notes["..n.."].LongBeatTime = "..i.LongBeatTime.."\n"
 	end
 	final = final.."\n"..currentNote
 end
@@ -122,7 +153,7 @@ Song.Info = {
 	Artist = "]]..Original.Artist..[[",
 	File = "]]..Original.File..[[",
 	Notes = ]]..noteCount..[[,
-	Long = 0,
+	UseBPM = true,
 	BPM = ]]..Original.BPM..[[,
 	Offset = ]]..Original.Offset..[[,
 	BGVideo = nil,

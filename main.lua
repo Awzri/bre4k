@@ -33,12 +33,15 @@ function love.load()
 	}
 	lanes = Song.Lanes
 	notes = Song.Notes
-	for _, i in next, notes do
-		if i.Time == 0 then
-			i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
+	currentLong = {}
+	if Song.Info.UseBPM then
+		for _, i in next, notes do
+			if i.Time == 0 then
+				i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
+			end
 		end
 	end
-	if love.filesystem.getInfo(Song.Info.File).type == "file" then
+	if Song.Info.File and love.filesystem.getInfo(Song.Info.File).type == "file" then
 		music = love.audio.newSource(Song.Info.File, "stream")
 	end
 	if music then music:play() end
@@ -84,27 +87,6 @@ function love.keypressed(key, scankey)
 		love.event.quit()
 
 	end
-	-- dont mind this absolute mess
-	--[[
-	for n, i in next, keys do
-		if key == i then
-			for m, j in next, lanes do
-				if lanes[n].Input == j.Input then
-					j.Pressed = true
-					print("Pressed!")
-					for noteCheck = 1, 4 do
-						local nextNote = notes[noteCheck] or nil
-						if nextNote and nextNote.Hittable and nextNote.Lane == j.Input and timeElapsedSinceStart >= nextNote.Time - .4 and timeElapsedSinceStart <= nextNote.Time + .4 then
-							print("Hit!")
-							if nextNote.Link then nextNote.Link() end
-							table.remove(notes, 1)
-						end
-					end
-				end
-			end
-		end
-	end
-	]]
 	for n, i in next, keys do
 		if key == i then
 			for m, j in next, lanes do
@@ -118,7 +100,12 @@ function love.keypressed(key, scankey)
 						and timeElapsedSinceStart <= k.Time + .25 then
 							print("Hit!")
 							if k.Link then k.Link() end
-							table.remove(notes, o)
+							if not k.Long then
+								table.remove(notes, o)
+							else
+								table.insert(currentLong, k)
+								table.remove(notes, o)
+							end
 							break
 						end
 					end
@@ -134,9 +121,22 @@ end
 function love.keyreleased(key, scankey)
 	for n, i in next, keys do
 		if key == i then
-			for _, j in next, lanes do
+			for m, j in next, lanes do
 				if lanes[n].Input == j.Input then
 					j.Pressed = false
+					for o, k in next, currentLong do
+						if timeElapsedSinceStart >= k.LongEnd - .3
+						and k.Lane == m
+						and timeElapsedSinceStart <= k.LongEnd + .3 then
+							print("Hit!")
+							table.remove(currentLong, o)
+							break
+						elseif k.Lane == m then
+							print("Miss!")
+							table.remove(currentLong, o)
+							break
+						end
+					end
 				end
 			end
 		end
@@ -166,7 +166,7 @@ function love.draw()
 	end
 
 	for _, i in next, notes do
-		if timeElapsedSinceStart > i.Time - 10 and i.Show then
+		if timeElapsedSinceStart > i.Time - 5 and i.Show then
 			if not i.Hittable then
 				love.graphics.setColor(i.ColorUnhittable)
 			else
@@ -178,6 +178,51 @@ function love.draw()
 				(timeElapsedSinceStart - i.Time) * percentHeight(i.Speed) + (lanes[i.Lane].Y),
 				percentWidth(3)
 			)
+			if i.Long then
+				local xmid = lanes[i.Lane].X + percentWidth(3.1)
+				local ymid = (timeElapsedSinceStart - i.LongEnd) * percentHeight(i.Speed) + (lanes[i.Lane].Y)
+				love.graphics.polygon(
+					"fill",
+					xmid,
+					ymid,
+					xmid + percentWidth(3),
+					ymid + percentHeight(5),
+					xmid + percentWidth(3),
+					(timeElapsedSinceStart - i.Time) * percentHeight(i.Speed) + (lanes[i.Lane].Y),
+					xmid - percentWidth(3),
+					(timeElapsedSinceStart - i.Time) * percentHeight(i.Speed) + (lanes[i.Lane].Y),
+					xmid - percentWidth(3),
+					ymid + percentHeight(5)
+				)
+				--[[love.graphics.circle(
+					"line",
+					lanes[i.Lane].X + percentWidth(3.1),
+					(timeElapsedSinceStart - i.LongEnd) * percentHeight(i.Speed) + (lanes[i.Lane].Y),
+					percentWidth(3)
+				)]]
+			end
+		end
+	end
+	for n, i in next, currentLong do
+		if timeElapsedSinceStart - i.LongEnd <= 0 then
+			local xmid = lanes[i.Lane].X + percentWidth(3.1)
+			local ymid = (timeElapsedSinceStart - i.LongEnd) * percentHeight(i.Speed) + (lanes[i.Lane].Y)
+			love.graphics.polygon(
+				"fill",
+				xmid,
+				ymid,
+				xmid + percentWidth(3),
+				ymid + percentHeight(5),
+				xmid + percentWidth(3),
+				lanes[i.Lane].Y,
+				xmid - percentWidth(3),
+				lanes[i.Lane].Y,
+				xmid - percentWidth(3),
+				ymid + percentHeight(5)
+			)
+		elseif timeElapsedSinceStart - i.LongEnd > .3 then
+			print("Miss!")
+			table.remove(currentLong, n)
 		end
 	end
 end
