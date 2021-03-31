@@ -71,7 +71,7 @@ do
 							if k.Lane == j then
 								k.LongMeasure = measureNumber
 								k.LongBeatTime = positionInMeasure
-								table.insert(NoteList, )
+								table.insert(NoteList, k)
 						table.insert(NoteList, )
 					elseif noteChecked ~= "0" then
 						local newNote = {}
