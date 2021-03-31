@@ -72,7 +72,9 @@ do
 								k.LongMeasure = measureNumber
 								k.LongBeatTime = positionInMeasure
 								table.insert(NoteList, k)
-						table.insert(NoteList, )
+							end
+						end
+						table.insert(NoteList, k)
 					elseif noteChecked ~= "0" then
 						local newNote = {}
 						newNote.Measure = measureNumber
