@@ -40,13 +40,26 @@ function love.load()
 			if i.Time == 0 then
 				-- Another really terrible solution that might need to be changed in the future
 				-- It works for now tho
-				print(n, i.ChangeBPM)
 				if i.ChangeBPM then
-					local lastNote = notes[n-1]
-					Song.Info.Offset = Song.Info.Offset + notes[n - 1].Time
+					Song.Info.Offset = Song.Info.Offset + convertBeatTime(Song.Info.BPM, 0, i.Measure, Song.Info.Offset)
+					for m, j in next, notes do
+						if m > n then
+							j.Measure = j.Measure - i.Measure
+							if j.Long then
+								j.LongMeasure = j.LongMeasure - i.Measure
+							end
+						end
+					end
+					i.Measure = 0
+					print(n, i.ChangeBPM, Song.Info.Offset)
 					Song.Info.BPM = i.ChangeBPM
 				end
 				i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
+				print(i.Time)
+				if i.Long then
+					i.LongEnd = convertBeatTime(Song.Info.BPM, i.LongBeatTime, i.LongMeasure, Song.Info.Offset)
+					print(i.LongEnd)
+				end
 			end
 		end
 	end
