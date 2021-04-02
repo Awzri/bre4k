@@ -24,7 +24,7 @@ function love.load()
 	timeElapsedSinceStart = 0
 	math.randomseed(os.time())
 	print("// - // Break the rules // - //")
-	love.window.setMode(711, 400, { fullscreen = true, vsync = 0 })
+	--love.window.setMode(711, 400, { fullscreen = true, vsync = 0 })
 	Lane = require("lane")
 	Note = require("note")
 	Song = require("song")
@@ -35,8 +35,17 @@ function love.load()
 	notes = Song.Notes
 	currentLong = {}
 	if Song.Info.UseBPM then
-		for _, i in next, notes do
+		print("Using BPM")
+		for n, i in next, notes do
 			if i.Time == 0 then
+				-- Another really terrible solution that might need to be changed in the future
+				-- It works for now tho
+				print(n, i.ChangeBPM)
+				if i.ChangeBPM then
+					local lastNote = notes[n-1]
+					Song.Info.Offset = Song.Info.Offset + notes[n - 1].Time
+					Song.Info.BPM = i.ChangeBPM
+				end
 				i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
 			end
 		end
@@ -185,13 +194,13 @@ function love.draw()
 					"fill",
 					xmid,
 					ymid,
-					xmid + percentWidth(3),
+					xmid + percentWidth(2.8),
 					ymid + percentHeight(5),
-					xmid + percentWidth(3),
+					xmid + percentWidth(2.8),
 					(timeElapsedSinceStart - i.Time) * percentHeight(i.Speed) + (lanes[i.Lane].Y),
-					xmid - percentWidth(3),
+					xmid - percentWidth(2.8),
 					(timeElapsedSinceStart - i.Time) * percentHeight(i.Speed) + (lanes[i.Lane].Y),
-					xmid - percentWidth(3),
+					xmid - percentWidth(2.8),
 					ymid + percentHeight(5)
 				)
 				--[[love.graphics.circle(
@@ -211,13 +220,13 @@ function love.draw()
 				"fill",
 				xmid,
 				ymid,
-				xmid + percentWidth(3),
+				xmid + percentWidth(2.8),
 				ymid + percentHeight(5),
-				xmid + percentWidth(3),
+				xmid + percentWidth(2.8),
 				lanes[i.Lane].Y,
-				xmid - percentWidth(3),
+				xmid - percentWidth(2.8),
 				lanes[i.Lane].Y,
-				xmid - percentWidth(3),
+				xmid - percentWidth(2.8),
 				ymid + percentHeight(5)
 			)
 		elseif timeElapsedSinceStart - i.LongEnd > .3 then

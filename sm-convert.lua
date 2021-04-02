@@ -28,9 +28,30 @@ Original = {
 	Name = string.match(smFileRead, "#TITLE:(.-);"),
 	Artist = string.match(smFileRead, "#ARTIST:(.-);"),
 	File = string.match(smFileRead, "#MUSIC:(.-);"),
-	BPM = string.match(smFileRead, "#BPMS:0=(.-);"),
-	Offset = tonumber(string.match(smFileRead, "#OFFSET:(.-);")) + 1
+	BPM = string.match(smFileRead, "#BPMS:0=(.-)(%p-)"),
+	Offset = tonumber(string.match(smFileRead, "#OFFSET:(.-);")) + 1,
+	BPMChanges = {},
+	MinBPM = 0,
+	MaxBPM = 0
 }
+
+do 
+	local currMin = 0 
+	local currMax = 0
+	for i in string.gmatch(string.match(smFileRead, "BPMS:(.-);"), "(.-),") do
+		local beat = tonumber(string.match(smFileRead, ":(.-)="))
+		if beat ~= 0 then
+			local changedBPM = tonumber(string.match(smFileRead, "=(.-)"))
+			print(beat, changedBPM)
+			if currMin > changedBPM then
+				currMin = changedBPM
+			elseif currMax < changedBPM then
+				currMax = changedBPM
+			end
+			table.insert(BPMChanges, i, beat)
+		end
+	end
+end
 
 local noteStart
 smFile:seek("set")
@@ -143,6 +164,8 @@ for n, i in next, NoteList do
 		currentNote = currentNote.."Song.Notes["..n.."].Long = true\n"
 		currentNote = currentNote.."Song.Notes["..n.."].LongMeasure = "..i.LongMeasure.."\n"
 		currentNote = currentNote.."SOng.Notes["..n.."].LongBeatTime = "..i.LongBeatTime.."\n"
+	elseif BPMChanges[i.BeatTime * 4 + i.Measure] ~= 0 then
+		currentNote = currentNote.."Song.Notes["..n.."].ChangeBPM = "..BPMChanges[i.BeatTime * 4 + i.Measure].."\n"
 	end
 	final = final.."\n"..currentNote
 end
@@ -157,6 +180,8 @@ Song.Info = {
 	Notes = ]]..noteCount..[[,
 	UseBPM = true,
 	BPM = ]]..Original.BPM..[[,
+	MinBPM = ]]..Original.MinBPM..[[,
+	MaxBPM = ]]..Original.MaxBPM..[[,
 	Offset = ]]..Original.Offset..[[,
 	BGVideo = nil,
 	BGImage = nil,

@@ -5,6 +5,7 @@ Note = {
 	Show = true,
 	Lane = 1,
 	Link = nil,
+	ChangeBPM = nil,
 	Hittable = true,
 	Long = false,
 	LongEnd = 0,
