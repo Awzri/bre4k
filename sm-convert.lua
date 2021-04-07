@@ -1,6 +1,7 @@
 -- Standalone converter for Stepmania songs
 -- CONVERTS .sm FILES, NOT .ssc FILES
 -- Used for bre4k
+-- https://github.com/NullCat/bre4k
 
 local file = {...}
 
@@ -21,14 +22,15 @@ else
 end
 
 local smFileRead = smFile:read("*all")
-local convertedFile = io.open("convert.lua", "w+")
+local convertedFile = io.open("song.lua", "w+")
 
 Original = {
 	Name = string.match(smFileRead, "#TITLE:(.-);"),
 	Artist = string.match(smFileRead, "#ARTIST:(.-);"),
 	File = string.match(smFileRead, "#MUSIC:(.-);"),
-	BPM = string.match(smFileRead, "#BPMS:0=(.-);"),
-	Offset = tonumber(string.match(smFileRead, "#OFFSET:(.-);")) + 1
+	BPM = string.match(smFileRead, "#BPMS:.-=(.-)%p+"),
+	Offset = tonumber(string.match(smFileRead, "#OFFSET:(.-);")), 
+	BPMChanges = {}
 }
 
 local noteStart
@@ -37,7 +39,7 @@ smFile:seek("set")
 for i = 1, 101 do
 	local nextLine = smFile:read("l")
 	if nextLine and string.match(nextLine, "#NOTES:") then
-		print("Found notes at line "..i + 6)
+		--print("Found notes at line "..i + 6)
 		noteStart = i + 6
 		break
 	elseif not nextLine then
@@ -47,53 +49,138 @@ for i = 1, 101 do
 	end
 end
 
+local currMin = tonumber(Original.BPM)
+local currMax = tonumber(Original.BPM)
+do 
+	local BPMList = string.match(smFileRead, "BPMS:(.-);")
+	--print(BPMList)
+	for i in string.gmatch(BPMList, "(.-),") do
+		local beat = tonumber(string.match(i, "(%d-%p-%d-)="))
+		--print("BPM CHANGE -----------")
+		--print(beat)
+		if beat ~= 0 then
+			beat = beat + 1
+			local changedBPM = tonumber(string.match(i, "=(.+)"))
+			--print("BPM "..i, changedBPM)
+			if currMin > changedBPM then
+				currMin = changedBPM
+			elseif currMax < changedBPM then
+				currMax = changedBPM
+			end
+			for j = #Original.BPMChanges, beat do
+				table.insert(Original.BPMChanges, 0)
+			end
+			--print(beat, changedBPM)
+			table.insert(Original.BPMChanges, beat, changedBPM)
+		end
+		--print("End change")
+	end
+end
+
 smFile:seek("set")
 -- Format for NoteList is similar to the Note object in bre4k
 local NoteList = {}
+local incompleteLongs = {}
 -- what do you mean f:lines() doesn't produce 2 variables?
 do
 	local n = 0
-	local positionInMeasure = 0
+	local positionInMeasure = -1
 	local firstNoteCreated = 0
 	local measureNumber = 1
 	for i in smFile:lines() do
 		i = i:match("(%S+)")
 		n = n + 1
 		if n >= noteStart then
+			if not i then error("Empty line found.\nMake sure that it is not multi-difficulty, and that there is no space between the start of the first measure and the groove radar data.\nAborting...") end
+			positionInMeasure = positionInMeasure + 1
 			if i:len() == 4 then
-				positionInMeasure = positionInMeasure + 1
 				for j = 1, 4 do
 					local noteChecked = i:sub(j,j)
-					if noteChecked == "1" then
-						print(noteChecked, positionInMeasure)
+					if noteChecked == "3" then
+						for m, k in next, incompleteLongs do
+							--print("LongCheck "..m, k.Lane, j)
+							--print("Time "..k.Measure, k.BeatTime)
+							--print("Time "..measureNumber, positionInMeasure)
+							if k.Lane == j then
+								--print("New long!")
+								k.Long = true
+								k.LongMeasure = measureNumber
+								k.LongBeatTime = positionInMeasure
+								table.insert(NoteList, k)
+								table.remove(incompleteLongs, m)
+								break
+							end
+						end
+						table.insert(NoteList, k)
+					elseif noteChecked ~= "0" and noteChecked ~= "3" then
 						local newNote = {}
 						newNote.Measure = measureNumber
 						newNote.BeatTime = positionInMeasure
 						newNote.Lane = j
-						table.insert(NoteList, newNote)
-					elseif noteChecked == "M" then
-						print(noteChecked)
-						local newNote = {}
-						newNote.Measure = measureNumber
-						newNote.Mine = true
-						newNote.BeatTime = positionInMeasure
-						newNote.Lane = j
-						table.insert(NoteList, newNote)
+						if noteChecked == "1" then
+							table.insert(NoteList, newNote)
+						elseif noteChecked == "2" or noteChecked == "4" then
+							--print("StartLong "..measureNumber, positionInMeasure)
+							table.insert(incompleteLongs, newNote)
+						elseif noteChecked == "M" then
+							newNote.Mine = true
+							table.insert(NoteList, newNote)
+						else
+							print("Unknown note: "..noteChecked)
+						end
 					end
 				end
-			elseif i:len() == 1 then
-				print("Hit comma...")
+			elseif i:len() == 1 or string.match(i,"(%p)") then
+				--print("Hit comma...")
+				for _, j in next, incompleteLongs do
+					if j.Measure == measureNumber then
+						j.BeatTime = j.BeatTime / positionInMeasure
+						j.BeatSet = true
+						--print(measureNumber, j.BeatTime)
+					end
+				end
 				for j = firstNoteCreated, #NoteList do
 					if NoteList[j] then
-						print(NoteList[j].BeatTime, positionInMeasure, NoteList[j].Measure)
-						NoteList[j].BeatTime = NoteList[j].BeatTime / positionInMeasure
+						NoteList[j].Show = true
+						NoteList[j].Hittable = true
+						if not NoteList[j].BeatSet then
+							NoteList[j].BeatTime = NoteList[j].BeatTime / positionInMeasure
+						end
+						if NoteList[j].Long then
+							--print(NoteList[j].LongBeatTime, positionInMeasure)
+							NoteList[j].LongBeatTime = NoteList[j].LongBeatTime / positionInMeasure
+							--print(NoteList[j].LongBeatTime)
+						end
+						local NoteBeat = NoteList[j].Measure * 4 + NoteList[j].BeatTime / .25
+						if NoteList[j].BeatTime % .25 == 0 and Original.BPMChanges[NoteBeat] and Original.BPMChanges[NoteBeat] ~= 0 then
+							print("Changing note "..j.." to BPM "..Original.BPMChanges[NoteBeat])
+							NoteList[j].ChangeBPM = Original.BPMChanges[NoteBeat]
+							Original.BPMChanges[NoteBeat] = 0
+						end
+					end
+				end
+				for n, j in next, Original.BPMChanges do
+					local NoteBeat = n
+					--local NoteBeat = (4 * measureNumber) + (n / .25)
+					if j ~= 0 then
+						print("Adding new note to compensate BPM.")
+						print(n, j)
+						local newNote = {}
+						newNote.Hittable = false
+						newNote.Show = false
+						newNote.Measure = measureNumber
+						newNote.Lane = 1
+						newNote.BeatTime = n / 4
+						newNote.ChangeBPM = j
+						table.insert(NoteList, newNote)
+						Original.BPMChanges[n] = 0
 					end
 				end
 				measureNumber = measureNumber + 1
 				firstNoteCreated = #NoteList + 1
-				positionInMeasure = 0
-				print(i)
-				print("Comma!")
+				positionInMeasure = -1
+				--print(i)
+				--print("Comma!")
 			end
 		else
 			firstNoteCreated = n - noteStart
@@ -101,18 +188,37 @@ do
 	end
 end
 
+
 local noteCount = #NoteList
 local final = ""
 for n, i in next, NoteList do
 	local currentNote = ""
 	currentNote = currentNote.."Song.Notes["..n.."].Lane = "..i.Lane.."\n"
 	currentNote = currentNote.."Song.Notes["..n.."].BeatTime = "..i.BeatTime.."\n"
-	currentNote = currentNote.."Song.Notes["..n.."].Measure = "..i.Measure.."\n"
+	currentNote = currentNote.."Song.Notes["..n.."].Measure = "..(i.Measure - 1).."\n"
 	if i.Mine then
 		currentNote = currentNote.."Song.Notes["..n.."].Mine = true\n"
 	end
+	if i.Long then
+		currentNote = currentNote.."Song.Notes["..n.."].Long = true\n"
+		currentNote = currentNote.."Song.Notes["..n.."].LongMeasure = "..(i.LongMeasure - 1).."\n"
+		currentNote = currentNote.."Song.Notes["..n.."].LongBeatTime = "..i.LongBeatTime.."\n"
+	end
+	if not i.Show then
+		currentNote = currentNote.."Song.Notes["..n.."].Show = false\n"
+	end
+	if not i.Hittable then
+		currentNote = currentNote.."Song.Notes["..n.."].Hittable = false\n"
+	end
+	if i.ChangeBPM then
+		currentNote = currentNote.."Song.Notes["..n.."].ChangeBPM = "..i.ChangeBPM.."\n"
+	end
+	--if i.BeatTime % .25 == 0 and Original.BPMChanges[i.Measure * 4 + i.BeatTime / .25] and Original.BPMChanges[i.Measure * 4 + i.BeatTime / .25] ~= 0 then
+		--currentNote = currentNote.."Song.Notes["..n.."].ChangeBPM = "..Original.BPMChanges[((i.Measure - 1) * 4 + i.BeatTime / .25) + 1].."\n"
+	--end
 	final = final.."\n"..currentNote
 end
+
 convertedFile:write([[
 Song={}
 local Note = require('note')
@@ -122,8 +228,10 @@ Song.Info = {
 	Artist = "]]..Original.Artist..[[",
 	File = "]]..Original.File..[[",
 	Notes = ]]..noteCount..[[,
-	Long = 0,
+	UseBPM = true,
 	BPM = ]]..Original.BPM..[[,
+	MinBPM = ]]..currMin..[[,
+	MaxBPM = ]]..currMax..[[,
 	Offset = ]]..Original.Offset..[[,
 	BGVideo = nil,
 	BGImage = nil,

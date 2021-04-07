@@ -37,7 +37,7 @@ You can do this by using the sm-convert.lua file.
 Please not the converter was made with Lua 5.4. Older/newer versions may not work.
 
 **! CONVERTER CURRENTLY CANNOT HANDLE !**
-- Long notes (NYI in Bre4k)
-- BPM Changes (Can be done manually)
 - Irregular Measures (Can be done manually)
+- Maps with multiple difficulties (Remove other difficulties before converting)
+
 *Please don't create an issue for any of those. They'll be in the converter/game eventually.*
