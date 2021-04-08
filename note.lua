@@ -25,10 +25,6 @@ function Note:new(o)
 	return o
 end
 
-function Note:addLinkBPM(func, timeBPM)
-
-end
-
 function Note:addLink(func, time)
 	Link = func(time)
 end

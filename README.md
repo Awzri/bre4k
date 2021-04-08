@@ -41,5 +41,6 @@ Please note the converter was made with Lua 5.4. Older/newer versions may not wo
 - Irregular Measures (Can be done manually)
 - Maps with multiple difficulties (Remove other difficulties before converting)
 - BPM changes with decimal places (Can be done manually)
+- Stops (Will not fix for now)
 
 *Please don't create an issue for any of those. They'll be in the converter/game eventually.*

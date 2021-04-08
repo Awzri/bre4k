@@ -116,7 +116,7 @@ function love.update(d)
 			table.remove(notes, n)
 		end
 		if timeElapsedSinceStart > i.Time + .25 and i.Hittable then
-			print("Miss!")
+			--print("Miss!")
 			judgementFunc("Miss...")
 			if i.Link then i.Link() end
 			table.remove(notes, n)
@@ -167,7 +167,7 @@ function love.keypressed(key, scankey)
 						and k.Lane == m
 						and timeElapsedSinceStart >= k.Time - .25
 						and timeElapsedSinceStart <= k.Time + .25 then
-							print("Hit!")
+							--print("Hit!")
 							--judgementFunc("Good!")
 							if k.Link then k.Link() end
 							if not k.Long then
@@ -198,12 +198,12 @@ function love.keyreleased(key, scankey)
 						if timeElapsedSinceStart >= k.LongEnd - .3
 						and k.Lane == m
 						and timeElapsedSinceStart <= k.LongEnd + .3 then
-							print("Hit!")
+							--print("Hit!")
 							--judgementFunc("Good!")
 							table.remove(currentLong, o)
 							break
 						elseif k.Lane == m then
-							print("Miss!")
+							--print("Miss!")
 							judgementFunc("N.G.")
 							table.remove(currentLong, o)
 							break
@@ -297,7 +297,7 @@ function love.draw()
 				ymid + percentHeight(5)
 			)
 		elseif timeElapsedSinceStart - i.LongEnd > .5 then
-			print("Miss!")
+			--print("Miss!")
 			table.remove(currentLong, n)
 		end
 	end

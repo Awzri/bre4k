@@ -37,7 +37,7 @@ local noteStart
 smFile:seek("set")
 -- ignore the fact i iterated f:read("l") here and then used f:lines() later
 for i = 1, 101 do
-	local nextLine = smFile:read("l")
+	local nextLine = smFile:read("*l")
 	if nextLine and string.match(nextLine, "#NOTES:") then
 		--print("Found notes at line "..i + 6)
 		noteStart = i + 6
@@ -67,11 +67,12 @@ do
 			elseif currMax < changedBPM then
 				currMax = changedBPM
 			end
-			for j = #Original.BPMChanges, beat do
+			--[[for j = #Original.BPMChanges, beat do
 				table.insert(Original.BPMChanges, 0)
-			end
+			end]]
 			--print(beat, changedBPM)
-			table.insert(Original.BPMChanges, beat, changedBPM)
+			Original.BPMChanges[tostring(beat)] = changedBPM
+			--table.insert(Original.BPMChanges, beat, changedBPM)
 		end
 		--print("End change")
 	end
@@ -91,7 +92,7 @@ do
 		i = i:match("(%S+)")
 		n = n + 1
 		if n >= noteStart then
-			if not i then error("Empty line found.\nMake sure that it is not multi-difficulty, and that there is no space between the start of the first measure and the groove radar data.\nAborting...") end
+			if not i then error("Empty line found.\nMake sure that it is not multi-difficulty, and that there is no space between the start of the first measure and the groove radar data.(Including comments)\nAborting...") end
 			positionInMeasure = positionInMeasure + 1
 			if i:len() == 4 then
 				for j = 1, 4 do
@@ -152,28 +153,30 @@ do
 							--print(NoteList[j].LongBeatTime)
 						end
 						local NoteBeat = NoteList[j].Measure * 4 + NoteList[j].BeatTime / .25
-						if NoteList[j].BeatTime % .25 == 0 and Original.BPMChanges[NoteBeat] and Original.BPMChanges[NoteBeat] ~= 0 then
-							print("Changing note "..j.." to BPM "..Original.BPMChanges[NoteBeat])
-							NoteList[j].ChangeBPM = Original.BPMChanges[NoteBeat]
-							Original.BPMChanges[NoteBeat] = 0
+						-- NoteList[j].BeatTime % .25 == 0 and
+						if Original.BPMChanges[tostring(NoteBeat)] and Original.BPMChanges[tostring(NoteBeat)] ~= 0 then
+							print("Changing note "..j.." on beat "..(NoteBeat - 1).." to BPM "..Original.BPMChanges[tostring(NoteBeat)])
+							NoteList[j].ChangeBPM = Original.BPMChanges[tostring(NoteBeat)]
+							Original.BPMChanges[tostring(NoteBeat)] = 0
 						end
 					end
 				end
-				for n, j in next, Original.BPMChanges do
-					local NoteBeat = n
+				--for n, j in next, Original.BPMChanges do
+				for n, j in pairs(Original.BPMChanges) do
+					local NoteBeat = tonumber(n)
+					--print(NoteBeat, (NoteBeat / 4), measureNumber + 1)
 					--local NoteBeat = (4 * measureNumber) + (n / .25)
-					if j ~= 0 then
-						print("Adding new note to compensate BPM.")
-						print(n, j)
+					if j ~= 0 and (NoteBeat / 4) <= measureNumber + 1 then
 						local newNote = {}
 						newNote.Hittable = false
 						newNote.Show = false
 						newNote.Measure = measureNumber
 						newNote.Lane = 1
-						newNote.BeatTime = n / 4
+						newNote.BeatTime = (NoteBeat - (measureNumber - 1)) / 4
+						print("Adding note "..#NoteList.." on beat "..(NoteBeat - 1).." to compensate BPM changing to "..j)
 						newNote.ChangeBPM = j
 						table.insert(NoteList, newNote)
-						Original.BPMChanges[n] = 0
+						Original.BPMChanges[tostring(n)] = 0
 					end
 				end
 				measureNumber = measureNumber + 1

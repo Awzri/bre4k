@@ -3,3 +3,4 @@
 *.sm
 song.lua
 testsong.lua
+*.replit
