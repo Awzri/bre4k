@@ -44,7 +44,7 @@ function love.load()
 			if i.Time == 0 then
 				-- Another really terrible solution that might need to be changed in the future
 				-- It works for now tho.
-				if i.ChangeBPM then
+				--[[if i.ChangeBPM then
 					Song.Info.Offset = -convertBeatTime(Song.Info.BPM, 0, i.OriginalMeasure, Song.Info.OriginalOffset)
 					for m, j in next, notes do
 						if m > n then
@@ -57,7 +57,7 @@ function love.load()
 					i.Measure = 0
 					--print(n, i.ChangeBPM, Song.Info.Offset)
 					Song.Info.BPM = i.ChangeBPM
-				end
+				end]]
 				i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
 				--[[ now this is what the cool kids call "debugging"
 				i call it torture but its the same thing

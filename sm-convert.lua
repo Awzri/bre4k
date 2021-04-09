@@ -52,9 +52,9 @@ end
 local currMin = tonumber(Original.BPM)
 local currMax = tonumber(Original.BPM)
 do 
-	local BPMList = string.match(smFileRead, "BPMS:(.-);")
+	local BPMList = string.match(smFileRead, "BPMS:(.-;)")
 	--print(BPMList)
-	for i in string.gmatch(BPMList, "(.-),") do
+	for i in string.gmatch(BPMList, "(.-)[,;]") do
 		local beat = tonumber(string.match(i, "(%d-%p-%d-)="))
 		--print("BPM CHANGE -----------")
 		--print(beat)
@@ -67,9 +67,6 @@ do
 			elseif currMax < changedBPM then
 				currMax = changedBPM
 			end
-			--[[for j = #Original.BPMChanges, beat do
-				table.insert(Original.BPMChanges, 0)
-			end]]
 			--print(beat, changedBPM)
 			Original.BPMChanges[tostring(beat)] = changedBPM
 			--table.insert(Original.BPMChanges, beat, changedBPM)
@@ -152,31 +149,6 @@ do
 							NoteList[j].LongBeatTime = NoteList[j].LongBeatTime / positionInMeasure
 							--print(NoteList[j].LongBeatTime)
 						end
-						local NoteBeat = NoteList[j].Measure * 4 + NoteList[j].BeatTime / .25
-						-- NoteList[j].BeatTime % .25 == 0 and
-						if Original.BPMChanges[tostring(NoteBeat)] and Original.BPMChanges[tostring(NoteBeat)] ~= 0 then
-							print("Changing note "..j.." on beat "..(NoteBeat - 1).." to BPM "..Original.BPMChanges[tostring(NoteBeat)])
-							NoteList[j].ChangeBPM = Original.BPMChanges[tostring(NoteBeat)]
-							Original.BPMChanges[tostring(NoteBeat)] = 0
-						end
-					end
-				end
-				--for n, j in next, Original.BPMChanges do
-				for n, j in pairs(Original.BPMChanges) do
-					local NoteBeat = tonumber(n)
-					--print(NoteBeat, (NoteBeat / 4), measureNumber + 1)
-					--local NoteBeat = (4 * measureNumber) + (n / .25)
-					if j ~= 0 and (NoteBeat / 4) <= measureNumber + 1 then
-						local newNote = {}
-						newNote.Hittable = false
-						newNote.Show = false
-						newNote.Measure = measureNumber
-						newNote.Lane = 1
-						newNote.BeatTime = (NoteBeat - (measureNumber - 1)) / 4
-						print("Adding note "..#NoteList.." on beat "..(NoteBeat - 1).." to compensate BPM changing to "..j)
-						newNote.ChangeBPM = j
-						table.insert(NoteList, newNote)
-						Original.BPMChanges[tostring(n)] = 0
 					end
 				end
 				measureNumber = measureNumber + 1
@@ -213,13 +185,26 @@ for n, i in next, NoteList do
 	if not i.Hittable then
 		currentNote = currentNote.."Song.Notes["..n.."].Hittable = false\n"
 	end
-	if i.ChangeBPM then
-		currentNote = currentNote.."Song.Notes["..n.."].ChangeBPM = "..i.ChangeBPM.."\n"
-	end
-	--if i.BeatTime % .25 == 0 and Original.BPMChanges[i.Measure * 4 + i.BeatTime / .25] and Original.BPMChanges[i.Measure * 4 + i.BeatTime / .25] ~= 0 then
-		--currentNote = currentNote.."Song.Notes["..n.."].ChangeBPM = "..Original.BPMChanges[((i.Measure - 1) * 4 + i.BeatTime / .25) + 1].."\n"
-	--end
 	final = final.."\n"..currentNote
+end
+
+local writtenBPMChanges = ""
+-- This is for writing the BPMChanges down.
+-- Let's sort the table first.
+do
+	local swaps = 0
+	local sorted = {}
+	-- For inserting in to the sorted table
+	for k, _ in next, Original.BPMChanges do
+		table.insert(sorted, tonumber(k))
+		--print(sorted[#sorted])
+	end
+	-- For actually sorting the table
+	table.sort(sorted)
+	for _, i in next, sorted do
+		--print(i, tostring(i), Original.BPMChanges[tostring(i)])
+		writtenBPMChanges = writtenBPMChanges.."[\""..i.."\"] = "..Original.BPMChanges[tostring(i)]..",\n\t\t"
+	end
 end
 
 convertedFile:write([[
@@ -238,7 +223,8 @@ Song.Info = {
 	Offset = ]]..Original.Offset..[[,
 	BGVideo = nil,
 	BGImage = nil,
-	Version = 1
+	Version = 1,
+	BPMChanges = {]]..writtenBPMChanges..[[}
 }
 Song.Lanes = {}
 for i=1,4 do

@@ -26,7 +26,8 @@ Song.Info = {
 	Offset = 0,
 	BGVideo = nil,
 	BGImage = nil,
-	Version = 1
+	Version = 1,
+	BPMChanges = {}
 }
 
 -- Init table to hold lanes
