@@ -40,24 +40,34 @@ function love.load()
 		for _, i in next, notes do
 			i.OriginalMeasure = i.Measure
 		end
+
+		local beatBlacklist = {}
 		for n, i in next, notes do
+			for m, j in next, Song.Info.BPMChanges do
+				local numM = tonumber(m)
+				if numM <= i.BeatTime * 4 + i.Measure and
+				not beatBlacklist[m] then
+					Song.Info.BPM = j
+					Song.Info.Offset = convertBeatTime(
+						Song.Info.BPM,
+						numM / 4 - math.floor(numM / 4),
+						math.floor(numM / 4),
+						Song.Info.OriginalOffset
+					)
+					print(Song.Info.Offset)
+					beatBlacklist[m] = true
+				end
+			end
 			if i.Time == 0 then
-				-- Another really terrible solution that might need to be changed in the future
-				-- It works for now tho.
-				--[[if i.ChangeBPM then
-					Song.Info.Offset = -convertBeatTime(Song.Info.BPM, 0, i.OriginalMeasure, Song.Info.OriginalOffset)
-					for m, j in next, notes do
-						if m > n then
-							j.Measure = j.Measure - i.Measure
-							if j.Long then
-								j.LongMeasure = j.LongMeasure - i.Measure
-							end
-						end
-					end
-					i.Measure = 0
-					--print(n, i.ChangeBPM, Song.Info.Offset)
-					Song.Info.BPM = i.ChangeBPM
-				end]]
+				i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
+				if i.Long then
+					i.LongEnd = convertBeatTime(Song.Info.BPM, i.LongBeatTime, i.LongMeasure, Song.Info.Offset)
+				end
+			end
+		end
+
+		for n, i in next, notes do
+			if i.Time == -1 then
 				i.Time = convertBeatTime(Song.Info.BPM, i.BeatTime, i.Measure, Song.Info.Offset)
 				--[[ now this is what the cool kids call "debugging"
 				i call it torture but its the same thing
